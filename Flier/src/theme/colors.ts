@@ -1,0 +1,18 @@
+export const colors = {
+  primary: '#FF9F1A',
+  primaryDeep: '#FF8B0A',
+  primarySoft: '#FFC468',
+  primaryGlow: 'rgba(255, 159, 26, 0.18)',
+  surface: '#FFFFFF',
+  surfaceMuted: '#FFF7EA',
+  textPrimary: '#262B36',
+  textSecondary: '#A8ADB7',
+  borderMuted: '#E8E8EC',
+  dotActive: '#FFAA1D',
+  dotInactive: '#DEE2E8',
+  loaderRing: 'rgba(255, 255, 255, 0.38)',
+  loaderTrack: 'rgba(255, 255, 255, 0.16)',
+  splashStar: 'rgba(255, 255, 255, 0.34)',
+  overlayStrong: 'rgba(255, 255, 255, 0.98)',
+  overlaySoft: 'rgba(255, 255, 255, 0.08)',
+} as const;

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
+import { typography } from '../theme/typography';
+
 export function FlierLogo({ light = true }: { light?: boolean }) {
   const textClassName = light ? 'text-white' : 'text-brand-text';
   const ringClassName = light ? 'border-white' : 'border-brand-primary';
@@ -15,7 +17,9 @@ export function FlierLogo({ light = true }: { light?: boolean }) {
         <View className={`absolute right-[14px] top-[15px] h-[4px] w-[4px] rounded-full ${accentClassName}`} />
         <View className={`absolute right-[20px] top-[19px] h-[5px] w-[5px] rounded-full ${accentClassName}`} />
       </View>
-      <Text className={`text-[30px] font-extrabold tracking-[-0.4px] ${textClassName}`}>
+      <Text
+        style={{ fontFamily: typography.fontFamily.extrabold }}
+        className={`text-[30px] tracking-[-0.4px] ${textClassName}`}>
         Flier
       </Text>
     </View>

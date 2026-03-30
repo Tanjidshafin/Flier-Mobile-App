@@ -1,12 +1,13 @@
 export const spacing = {
-  screenHorizontal: 16,
-  heroTop: 18,
+  screenHorizontal: 20,
+  heroTop: 22,
   ctaBottom: 28,
 } as const;
 
 export const radii = {
   hero: 110,
-  card: 34,
+  card: 28,
   button: 18,
+  sheet: 32,
   circle: 999,
 } as const;

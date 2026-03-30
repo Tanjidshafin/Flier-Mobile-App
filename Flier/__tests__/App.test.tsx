@@ -1,9 +1,26 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn().mockResolvedValue(null),
+    removeItem: jest.fn().mockResolvedValue(undefined),
+    setItem: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
+jest.mock('@gorhom/bottom-sheet', () => ({
+  BottomSheetBackdrop: ({ children }: { children?: React.ReactNode }) => children ?? null,
+  BottomSheetModal: ({ children }: { children?: React.ReactNode }) => children ?? null,
+  BottomSheetModalProvider: ({ children }: { children: React.ReactNode }) => children,
+  BottomSheetScrollView: ({ children }: { children: React.ReactNode }) => children,
+  BottomSheetView: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 jest.mock('react-native-reanimated', () => {
   const React = require('react');
-  const { View } = require('react-native');
+  const { ScrollView, View } = require('react-native');
 
   const createAnimationBuilder = () => ({
     duration: () => createAnimationBuilder(),
@@ -14,14 +31,18 @@ jest.mock('react-native-reanimated', () => {
   return {
     __esModule: true,
     default: {
+      createAnimatedComponent: (component: unknown) => component,
+      ScrollView,
       View,
     },
-    Easing: {
-      linear: jest.fn(),
-    },
+    Extrapolation: { CLAMP: 'clamp' },
     FadeInDown: createAnimationBuilder(),
     FadeInUp: createAnimationBuilder(),
     Layout: createAnimationBuilder(),
+    interpolate: jest.fn((value: number) => value),
+    interpolateColor: jest.fn(() => '#000000'),
+    runOnJS: (fn: (...args: unknown[]) => unknown) => fn,
+    useAnimatedScrollHandler: jest.fn(() => jest.fn()),
     useAnimatedStyle: (updater: () => unknown) => updater(),
     useSharedValue: (value: unknown) => ({ value }),
     withRepeat: (value: unknown) => value,
@@ -30,29 +51,27 @@ jest.mock('react-native-reanimated', () => {
     withTiming: (value: unknown) => value,
   };
 });
+
 jest.mock('react-native-gesture-handler', () => ({
   GestureHandlerRootView: ({ children }: { children: React.ReactNode }) => children,
 }));
-jest.mock('react-native-linear-gradient', () => 'LinearGradient');
+
 jest.mock('@react-navigation/native', () => ({
-  NavigationContainer: ({ children }: { children: React.ReactNode }) => children,
   DefaultTheme: { colors: {} },
+  NavigationContainer: ({ children }: { children: React.ReactNode }) => children,
 }));
-jest.mock('@react-navigation/native-stack', () => ({
-  createNativeStackNavigator: () => {
+
+jest.mock('../src/navigation/AppNavigator', () => ({
+  AppNavigator: () => {
     const React = require('react');
-    return {
-      Navigator: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-      Screen: ({ component: Component }: { component: React.ComponentType<any> }) => (
-        <Component navigation={{ replace: jest.fn() }} route={{ key: 'mock', name: 'Mock' }} />
-      ),
-    };
+    const { View } = require('react-native');
+    return <View testID="app-navigator" />;
   },
 }));
 
 import App from '../App';
 
-test('renders onboarding flow shell', async () => {
+test('renders app shell', async () => {
   await ReactTestRenderer.act(() => {
     const tree = ReactTestRenderer.create(<App />);
     expect(tree).toBeTruthy();

@@ -7,6 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { colors } from '../theme/colors';
+import { typography } from '../theme/typography';
 
 type PaginationDotsProps = {
   activeIndex: number;
@@ -68,19 +69,20 @@ export function OnboardingButton({
         fullWidth ? 'w-full' : ''
       } ${isPrimary ? 'bg-brand-primary' : 'bg-white border border-brand-border'}`}
       style={{
-        minHeight: 58,
+        minHeight: 56,
         paddingHorizontal: isPrimary ? 24 : 20,
         shadowColor: isPrimary ? colors.primary : 'transparent',
-        shadowOpacity: isPrimary ? 0.18 : 0,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 10 },
-        elevation: isPrimary ? 5 : 0,
+        shadowOpacity: isPrimary ? 0.14 : 0,
+        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: isPrimary ? 4 : 0,
       }}>
       <View className="flex-row items-center justify-center gap-3">
         <Text
-          className={`text-center text-[18px] font-extrabold ${
-            isPrimary ? 'text-white' : 'text-brand-text'
-          }`}>
+          style={[
+            typography.button,
+            { color: isPrimary ? colors.surface : colors.textPrimary },
+          ]}>
           {label}
         </Text>
         {icon}

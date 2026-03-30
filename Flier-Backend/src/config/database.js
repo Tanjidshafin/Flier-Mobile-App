@@ -1,6 +1,5 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const mongoose = require('mongoose');
 
-let client;
 let database;
 
 async function connectToDatabase({ mongoUri, dbName }) {
@@ -8,18 +7,12 @@ async function connectToDatabase({ mongoUri, dbName }) {
     return database;
   }
 
-  client = new MongoClient(mongoUri, {
-    serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-    },
+  await mongoose.connect(mongoUri, {
+    dbName,
     serverSelectionTimeoutMS: 5000,
   });
 
-  await client.connect();
-  database = client.db(dbName);
-  await database.command({ ping: 1 });
+  database = mongoose.connection;
 
   return database;
 }
@@ -37,9 +30,8 @@ function getDatabaseStatus() {
 }
 
 async function closeDatabaseConnection() {
-  if (client) {
-    await client.close();
-    client = undefined;
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
     database = undefined;
   }
 }

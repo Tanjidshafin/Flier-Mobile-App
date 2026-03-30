@@ -3,8 +3,8 @@ const express = require('express');
 const dns = require('dns');
 dns.setServers(['1.1.1.1', '8.8.8.8']);
 const routes = require('./routes');
-const { errorHandler } = require('./middlewares/errorHandler');
-const { notFoundHandler } = require('./middlewares/notFoundHandler');
+const { errorHandler } = require('./middleware/errorHandler');
+const { notFoundHandler } = require('./middleware/notFoundHandler');
 
 function createApp({ clientUrl }) {
   const app = express();

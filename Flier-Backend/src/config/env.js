@@ -18,6 +18,8 @@ function getEnvConfig() {
     mongoUri: process.env.MONGODB_URI,
     dbName: process.env.DB_NAME,
     clientUrl: process.env.CLIENT_URL,
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    jwtSecret: process.env.JWT_SECRET || 'flier-dev-secret',
     nodeEnv: process.env.NODE_ENV || 'development',
   };
 }

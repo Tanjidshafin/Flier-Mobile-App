@@ -2,26 +2,27 @@ import { OnboardingSlide } from '../types/onboarding';
 
 export const onboardingSlides: OnboardingSlide[] = [
   {
-    id: 'gateway',
-    title: 'Gateway to Your\nAdventure',
-    description:
-      'Enjoy various housing options, from budget to luxury, in Flier.',
-    image: require('../assets/images/onboarding-1.png'),
-    variant: 'hero',
-  },
-  {
     id: 'discover',
-    title: 'Discover the Wonders of\nthe World: Let\'s Explore!',
-    description: 'Book a stay wherever you are, whenever you want.',
-    image: require('../assets/images/onboarding-2.png'),
+    title: 'Discover Stays That\nFeel Curated',
+    description:
+      'Browse design-led hotels across Indonesia with a booking flow made for quick city breaks and slow weekends.',
+    image: require('../assets/images/onboarding-1.webp'),
     variant: 'hero',
   },
   {
-    id: 'holiday',
-    title: 'The Right Solution for Your\nHoliday Accommodation',
+    id: 'compare',
+    title: 'Search Faster, Filter\nSmarter, Travel Better',
     description:
-      'A stress-free Holiday? Trust your Holiday accommodation to Flier!',
-    image: require('../assets/images/onboarding-3.png'),
+      'Pick destinations, compare amenities, and fine-tune your stay with guest counts, ratings, and price ranges.',
+    image: require('../assets/images/onboarding-2.jpg'),
+    variant: 'hero',
+  },
+  {
+    id: 'book',
+    title: 'Save Favorites And\nBook With Confidence',
+    description:
+      'Keep a local wishlist, sign in only when you are ready to book, and confirm stays in a few taps.',
+    image: require('../assets/images/onboarding-3.jpg'),
     variant: 'mosaic',
   },
 ];

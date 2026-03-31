@@ -18,6 +18,10 @@ async function authenticateRequest(req, res, next) {
       throw new AppError('Invalid authentication token.', 401);
     }
 
+    if (user.status === 'suspended') {
+      throw new AppError('Your account has been suspended.', 403);
+    }
+
     req.user = user;
     next();
   } catch (error) {
@@ -25,4 +29,16 @@ async function authenticateRequest(req, res, next) {
   }
 }
 
-module.exports = { authenticateRequest };
+function requireAdmin(req, res, next) {
+  if (!req.user) {
+    return next(new AppError('Authentication is required.', 401));
+  }
+
+  if (req.user.role !== 'admin') {
+    return next(new AppError('Admin access is required.', 403));
+  }
+
+  return next();
+}
+
+module.exports = { authenticateRequest, requireAdmin };

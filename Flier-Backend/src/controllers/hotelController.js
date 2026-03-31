@@ -31,7 +31,10 @@ async function listHotels(req, res) {
 }
 
 async function getHotelDetails(req, res) {
-  const data = await hotelService.getHotelDetails(req.params.slug);
+  const data =
+    req.query.checkIn || req.query.checkOut
+      ? await hotelService.getHotelDetailsForStay(req.params.slug, req.query)
+      : await hotelService.getHotelDetails(req.params.slug);
 
   res.status(200).json({
     success: true,

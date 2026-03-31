@@ -7,6 +7,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { navigationRef } from './src/navigation/navigationRef';
+import { AppProviders } from './src/providers/AppProviders';
 import { colors } from './src/theme/colors';
 import { typography } from './src/theme/typography';
 
@@ -50,12 +52,14 @@ function App(): React.JSX.Element {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <BottomSheetModalProvider>
-          <NavigationContainer theme={navigationTheme}>
-            <StatusBar backgroundColor={colors.surface} barStyle="dark-content" />
-            <AppNavigator />
-          </NavigationContainer>
-        </BottomSheetModalProvider>
+        <AppProviders>
+          <BottomSheetModalProvider>
+            <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+              <StatusBar backgroundColor={colors.surface} barStyle="dark-content" />
+              <AppNavigator />
+            </NavigationContainer>
+          </BottomSheetModalProvider>
+        </AppProviders>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

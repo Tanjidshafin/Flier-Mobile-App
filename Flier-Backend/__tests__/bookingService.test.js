@@ -18,6 +18,11 @@ jest.mock('../src/models/User', () => ({
   },
 }));
 
+jest.mock('../src/services/notificationService', () => ({
+  createAdminNotifications: jest.fn().mockResolvedValue([]),
+  createNotification: jest.fn().mockResolvedValue({}),
+}));
+
 const { Booking } = require('../src/models/Booking');
 const { Hotel } = require('../src/models/Hotel');
 const { User } = require('../src/models/User');
@@ -33,10 +38,13 @@ describe('bookingService', () => {
 
     User.findById.mockResolvedValue({
       _id: 'user-1',
+      createdAt: '2026-03-30T00:00:00.000Z',
       email: 'demo@example.com',
       fullName: 'Demo Traveler',
       phoneNumber: null,
+      role: 'user',
       save,
+      status: 'active',
     });
 
     Hotel.findById.mockResolvedValue({
@@ -102,6 +110,7 @@ describe('bookingService', () => {
     expect(save).toHaveBeenCalled();
     expect(result.booking.confirmationCode).toBe('FLR-123456');
     expect(result.user.phoneNumber).toBe('+628123456789');
+    expect(result.user.role).toBe('user');
   });
 
   test('createBooking rejects bookings that exceed guest capacity', async () => {
@@ -110,7 +119,9 @@ describe('bookingService', () => {
       email: 'demo@example.com',
       fullName: 'Demo Traveler',
       phoneNumber: '+628123456789',
+      role: 'user',
       save: jest.fn(),
+      status: 'active',
     });
 
     Hotel.findById.mockResolvedValue({

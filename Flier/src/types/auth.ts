@@ -7,10 +7,16 @@ export type CountryOption = {
 export type AuthIdentifierType = 'username' | 'phoneNumber';
 
 export type AuthUser = {
+  avatar?: {
+    publicId?: string | null;
+    url?: string | null;
+  };
   id: string;
   fullName: string;
   email: string;
   phoneNumber?: string | null;
+  role: 'user' | 'admin';
+  status: 'active' | 'suspended';
   createdAt?: string;
 };
 

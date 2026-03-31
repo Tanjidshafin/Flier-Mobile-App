@@ -29,6 +29,10 @@ export function RegisterScreen({ navigation, route }: Props) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleRegister = React.useCallback(async () => {
+    if (isSubmitting) {
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
@@ -59,7 +63,16 @@ export function RegisterScreen({ navigation, route }: Props) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [confirmPassword, email, fullName, navigation, password, route.params?.source, signUp]);
+  }, [
+    confirmPassword,
+    email,
+    fullName,
+    isSubmitting,
+    navigation,
+    password,
+    route.params?.source,
+    signUp,
+  ]);
 
   return (
     <AuthScreenShell
@@ -114,7 +127,13 @@ export function RegisterScreen({ navigation, route }: Props) {
       ) : null}
 
       <PrimaryButton
-        disabled={!fullName.trim() || !email.trim() || !password || !confirmPassword}
+        disabled={
+          isSubmitting ||
+          !fullName.trim() ||
+          !email.trim() ||
+          !password ||
+          !confirmPassword
+        }
         label={isSubmitting ? 'Creating account...' : 'Create Account'}
         onPress={handleRegister}
       />

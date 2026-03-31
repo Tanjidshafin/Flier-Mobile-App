@@ -6,15 +6,32 @@ const routes = require('./routes');
 const { errorHandler } = require('./middleware/errorHandler');
 const { notFoundHandler } = require('./middleware/notFoundHandler');
 
-function createApp({ clientUrl }) {
+function createCorsOptions(clientUrls = []) {
+  if (clientUrls.length === 0) {
+    return {
+      credentials: true,
+      origin: true,
+    };
+  }
+
+  return {
+    credentials: true,
+    origin(origin, callback) {
+      if (!origin || clientUrls.includes(origin)) {
+        return callback(null, true);
+      }
+
+      const error = new Error(`Origin ${origin} is not allowed by CORS.`);
+      error.statusCode = 403;
+      return callback(error);
+    },
+  };
+}
+
+function createApp({ clientUrls = [] }) {
   const app = express();
 
-  app.use(
-    cors({
-      origin: clientUrl,
-      credentials: true,
-    }),
-  );
+  app.use(cors(createCorsOptions(clientUrls)));
   app.use(express.json());
 
   app.get('/', (req, res) => {

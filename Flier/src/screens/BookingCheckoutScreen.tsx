@@ -1,6 +1,7 @@
 import React from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { Image, ScrollView, Text, TextInput, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useStripe } from '@stripe/stripe-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppIcon from '../components/AppIcon';
@@ -8,13 +9,18 @@ import { EmptyState } from '../components/app/EmptyState';
 import { PrimaryAction } from '../components/app/PrimaryAction';
 import { ScreenHeader } from '../components/app/ScreenHeader';
 import { AuthTextField } from '../components/auth/AuthTextField';
-import { createBooking, fetchHotelDetails } from '../services/api';
+import {
+  useCompleteBookingMutation,
+  useHoldBookingMutation,
+} from '../features/bookings/hooks';
+import { useHotelDetailsQuery } from '../features/hotels/hooks';
 import { useAuthStore } from '../store/authStore';
 import { useBookingStore } from '../store/bookingStore';
+import { useUIStore } from '../store/uiStore';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { RootStackParamList } from '../types/navigation';
-import { HotelDetails } from '../types/hotel';
+import { createIdempotencyKey } from '../utils/idempotency';
 import { formatCurrency, formatLongDate, getNightCount } from '../utils/format';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BookingCheckout'>;
@@ -48,21 +54,17 @@ export function BookingCheckoutScreen({ navigation }: Props) {
   const updateDraft = useBookingStore(state => state.updateDraft);
   const clearDraft = useBookingStore(state => state.clearDraft);
   const setLatestBooking = useBookingStore(state => state.setLatestBooking);
-  const [details, setDetails] = React.useState<HotelDetails | null>(null);
+  const showToast = useUIStore(state => state.showToast);
   const [phone, setPhone] = React.useState(draft?.contactPhone || session?.user.phoneNumber || '');
   const [specialRequests, setSpecialRequests] = React.useState(draft?.specialRequests || '');
-  const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState('');
-
-  React.useEffect(() => {
-    if (!draft?.hotelSlug) {
-      return;
-    }
-
-    fetchHotelDetails(draft.hotelSlug)
-      .then(setDetails)
-      .catch(() => setDetails(null));
-  }, [draft?.hotelSlug]);
+  const holdBookingMutation = useHoldBookingMutation();
+  const completeBookingMutation = useCompleteBookingMutation();
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const { data: details } = useHotelDetailsQuery(draft?.hotelSlug || '', {
+    checkIn: draft?.checkIn,
+    checkOut: draft?.checkOut,
+  });
 
   if (!draft || !session) {
     return (
@@ -77,16 +79,19 @@ export function BookingCheckoutScreen({ navigation }: Props) {
   }
 
   const nights = getNightCount(draft.checkIn, draft.checkOut);
+  const roomRate = details?.roomTypes.find(item => item.code === draft.roomTypeId)?.nightlyRate || draft.nightlyRate;
   const pricing = details?.pricing ?? {
     cleaningFee: 0,
     currency: draft.currency,
-    nightlyRate: draft.nightlyRate,
+    nightlyRate: roomRate,
     serviceFee: 0,
     taxRate: 0.1,
   };
-  const baseAmount = pricing.nightlyRate * nights;
+  const baseAmount = roomRate * nights * draft.roomCount;
   const taxAmount = Math.round(baseAmount * pricing.taxRate);
   const totalAmount = baseAmount + pricing.cleaningFee + pricing.serviceFee + taxAmount;
+  const isSubmitting =
+    holdBookingMutation.isPending || completeBookingMutation.isPending;
 
   return (
     <View className="flex-1 bg-brand-surfaceMuted">
@@ -102,11 +107,16 @@ export function BookingCheckoutScreen({ navigation }: Props) {
           Confirm your stay
         </Text>
         <Text style={typography.body} className="mt-2 text-brand-muted">
-          Reserve now, pay later. We only need a few final details.
+          Review your room, then pay securely to lock in the booking.
         </Text>
 
         <View className="mt-6 rounded-[28px] bg-white p-5">
-          <Text style={typography.title} className="text-brand-text">
+          <Image
+            source={{ uri: draft.hotelImage }}
+            resizeMode="cover"
+            style={{ borderRadius: 22, height: 180, width: '100%' }}
+          />
+          <Text style={[typography.title, { marginTop: 14 }]} className="text-brand-text">
             {draft.hotelName}
           </Text>
           <Text style={typography.body} className="mt-2 text-brand-muted">
@@ -121,8 +131,10 @@ export function BookingCheckoutScreen({ navigation }: Props) {
             <SummaryRow
               icon="account-group-outline"
               label="Guests"
-              value={`${draft.adults + draft.children} guests, ${draft.rooms} room`}
+              value={`${draft.adults + draft.children} guests`}
             />
+            <SummaryRow icon="bed-outline" label="Room type" value={draft.roomTypeName} />
+            <SummaryRow icon="bed-outline" label="Rooms" value={`${draft.roomCount}`} />
             <SummaryRow icon="weather-night" label="Nights" value={`${nights}`} />
           </View>
         </View>
@@ -147,11 +159,6 @@ export function BookingCheckoutScreen({ navigation }: Props) {
               }}
             />
           </View>
-          <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 4 }]}>
-            {session.user.phoneNumber
-              ? 'You can update the saved contact number for this reservation.'
-              : 'Phone becomes required the first time you confirm a booking.'}
-          </Text>
         </View>
 
         <View className="mt-5 rounded-[28px] bg-white p-5">
@@ -161,6 +168,10 @@ export function BookingCheckoutScreen({ navigation }: Props) {
           <TextInput
             multiline
             numberOfLines={4}
+            onChangeText={value => {
+              setSpecialRequests(value);
+              updateDraft({ specialRequests: value });
+            }}
             placeholder="Late arrival, high floor, quiet room..."
             placeholderTextColor={colors.textMuted}
             style={[
@@ -176,10 +187,6 @@ export function BookingCheckoutScreen({ navigation }: Props) {
               },
             ]}
             value={specialRequests}
-            onChangeText={value => {
-              setSpecialRequests(value);
-              updateDraft({ specialRequests: value });
-            }}
           />
         </View>
 
@@ -189,7 +196,7 @@ export function BookingCheckoutScreen({ navigation }: Props) {
           </Text>
           <View className="mt-4 gap-3">
             <SummaryRow
-              label={`${formatCurrency(pricing.nightlyRate, pricing.currency)} x ${nights} nights`}
+              label={`${formatCurrency(roomRate, pricing.currency)} x ${nights} nights x ${draft.roomCount} room`}
               value={formatCurrency(baseAmount, pricing.currency)}
             />
             <SummaryRow
@@ -200,15 +207,9 @@ export function BookingCheckoutScreen({ navigation }: Props) {
               label="Service fee"
               value={formatCurrency(pricing.serviceFee, pricing.currency)}
             />
-            <SummaryRow
-              label="Taxes"
-              value={formatCurrency(taxAmount, pricing.currency)}
-            />
+            <SummaryRow label="Taxes" value={formatCurrency(taxAmount, pricing.currency)} />
             <View className="mt-2 h-px bg-brand-border" />
-            <SummaryRow
-              label="Total"
-              value={formatCurrency(totalAmount, pricing.currency)}
-            />
+            <SummaryRow label="Total" value={formatCurrency(totalAmount, pricing.currency)} />
           </View>
         </View>
 
@@ -225,20 +226,59 @@ export function BookingCheckoutScreen({ navigation }: Props) {
         className="absolute inset-x-0 bottom-0 border-t border-brand-border bg-white px-5"
         style={{ paddingBottom: Math.max(insets.bottom, 18), paddingTop: 16 }}>
         <PrimaryAction
-          label={submitting ? 'Confirming booking...' : 'Confirm Booking'}
+          disabled={isSubmitting || !phone.trim()}
+          label={isSubmitting ? 'Processing booking...' : 'Pay and confirm'}
           onPress={async () => {
+            const holdIdempotencyKey = createIdempotencyKey('hold');
+            const completeIdempotencyKey = createIdempotencyKey('complete');
+
             try {
-              setSubmitting(true);
               setError('');
-              const response = await createBooking({
+              const holdResponse = await holdBookingMutation.mutateAsync({
                 adults: draft.adults,
                 checkIn: draft.checkIn,
                 checkOut: draft.checkOut,
                 children: draft.children,
                 contactPhone: phone,
                 hotelId: draft.hotelId,
-                rooms: draft.rooms,
+                idempotencyKey: holdIdempotencyKey,
+                roomCount: draft.roomCount,
+                roomTypeId: draft.roomTypeId,
                 specialRequests,
+              });
+
+              if (
+                holdResponse.paymentSession.provider === 'stripe' &&
+                holdResponse.paymentSession.paymentIntentClientSecret &&
+                holdResponse.paymentSession.customerId &&
+                holdResponse.paymentSession.ephemeralKeySecret
+              ) {
+                const initResult = await initPaymentSheet({
+                  customerEphemeralKeySecret:
+                    holdResponse.paymentSession.ephemeralKeySecret,
+                  customerId: holdResponse.paymentSession.customerId,
+                  merchantDisplayName: holdResponse.paymentSession.merchantDisplayName,
+                  paymentIntentClientSecret:
+                    holdResponse.paymentSession.paymentIntentClientSecret,
+                });
+
+                if (initResult.error) {
+                  throw new Error(initResult.error.message);
+                }
+
+                const paymentResult = await presentPaymentSheet();
+
+                if (paymentResult.error) {
+                  throw new Error(paymentResult.error.message);
+                }
+              }
+
+              const booking = await completeBookingMutation.mutateAsync({
+                bookingId: holdResponse.booking.id,
+                payload: {
+                  idempotencyKey: completeIdempotencyKey,
+                  paymentIntentId: holdResponse.paymentSession.paymentIntentId,
+                },
               });
 
               useAuthStore.setState(state => ({
@@ -247,23 +287,26 @@ export function BookingCheckoutScreen({ navigation }: Props) {
                       ...state.session,
                       user: {
                         ...state.session.user,
-                        phoneNumber: response.user.phoneNumber,
+                        phoneNumber: phone,
                       },
                     }
                   : state.session,
               }));
 
-              setLatestBooking(response.booking);
+              setLatestBooking(booking);
               clearDraft();
-              navigation.replace('BookingSuccess', { bookingId: response.booking.id });
+              showToast({
+                message: 'Your reservation is confirmed.',
+                title: 'Booking complete',
+                tone: 'success',
+              });
+              navigation.replace('BookingSuccess', { bookingId: booking.id });
             } catch (caughtError) {
               const nextError =
                 caughtError instanceof Error
                   ? caughtError.message
                   : 'Unable to confirm this booking right now.';
               setError(nextError);
-            } finally {
-              setSubmitting(false);
             }
           }}
         />

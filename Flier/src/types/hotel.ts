@@ -3,6 +3,11 @@ export type PricingSummary = {
   currency: string;
 };
 
+export type DestinationSelection = {
+  destinationId?: string;
+  destinationLabel: string;
+};
+
 export type HotelLocation = {
   address: string;
   area: string;
@@ -31,8 +36,44 @@ export type HotelSummary = {
   price: PricingSummary;
 };
 
+export type RoomType = {
+  amenities: string[];
+  availableUnits: number;
+  beds: number;
+  code: string;
+  description: string;
+  image: string | null;
+  maxGuests: number;
+  name: string;
+  nightlyRate: number;
+  reservedUnits: number;
+};
+
+export type ReviewPreview = {
+  authorAvatar: string | null;
+  authorName: string;
+  comment: string;
+  createdAt: string;
+  id: string;
+  rating: number;
+};
+
+export type HotelAvailability = {
+  byRoomType: Record<
+    string,
+    {
+      availableUnits: number;
+      reservedUnits: number;
+    }
+  >;
+  hasAvailability: boolean;
+  totalAvailableRooms: number;
+};
+
 export type HotelDetails = HotelSummary & {
   availableRooms: number;
+  availability: HotelAvailability;
+  cancellationWindowHours: number;
   description: string;
   images: string[];
   policies: {
@@ -48,6 +89,18 @@ export type HotelDetails = HotelSummary & {
     taxRate: number;
     currency: string;
   };
+  recentReviews: ReviewPreview[];
+  reviewsSummary: {
+    average: number;
+    categories: {
+      cleanliness: number;
+      location: number;
+      service: number;
+      value: number;
+    };
+    total: number;
+  };
+  roomTypes: RoomType[];
 };
 
 export type DestinationSuggestion = {
@@ -66,8 +119,9 @@ export type FeaturedDestination = {
 };
 
 export type SearchFilters = {
-  query: string;
+  searchText: string;
   destinationId?: string;
+  destinationLabel?: string;
   checkIn: string;
   checkOut: string;
   adults: number;
@@ -80,19 +134,29 @@ export type SearchFilters = {
   sortBy: 'recommended' | 'priceAsc' | 'priceDesc' | 'ratingDesc';
 };
 
+export type HotelSearchParams = SearchFilters & {
+  cursor?: string | null;
+  limit?: number;
+};
+
 export type HomePayload = {
   featuredHotels: HotelSummary[];
   featuredDestinations: FeaturedDestination[];
 };
 
+export type HotelListCursor = {
+  hasMore: boolean;
+  limit: number;
+  nextCursor: string | null;
+  page: number;
+  total: number;
+  totalCount: number;
+  totalPages: number;
+};
+
 export type HotelSearchResponse = {
   items: HotelSummary[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: HotelListCursor;
 };
 
 export type WishlistEntry = {

@@ -18,7 +18,6 @@ type WishlistState = {
   isSyncing: boolean;
   remoteItems: WishlistEntry[];
   addGuestItem: (hotel: HotelSummary) => void;
-  getVisibleItems: () => HotelSummary[];
   hydrateRemoteWishlist: () => Promise<void>;
   isSaved: (hotelId: string) => boolean;
   removeGuestItem: (hotelId: string) => void;
@@ -36,13 +35,6 @@ export const useWishlistStore = create<WishlistState>()(
             ? state.guestItems
             : [hotel, ...state.guestItems],
         })),
-      getVisibleItems: () => {
-        const session = useAuthStore.getState().session;
-        if (session) {
-          return get().remoteItems.map(item => item.hotel);
-        }
-        return get().guestItems;
-      },
       guestItems: [],
       hasHydrated: false,
       hydrateRemoteWishlist: async () => {

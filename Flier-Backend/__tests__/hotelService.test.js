@@ -87,6 +87,7 @@ describe('hotelService', () => {
         availableRooms: { $gte: 1 },
         maxGuests: { $gte: 2 },
         rating: { $gte: 4.5 },
+        status: 'active',
       }),
     );
     expect(skip).toHaveBeenCalledWith(10);

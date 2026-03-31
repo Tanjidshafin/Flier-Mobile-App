@@ -16,15 +16,20 @@ type Props = BottomTabScreenProps<MainTabParamList, 'Wishlist'>;
 export function WishlistScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const session = useAuthStore(state => state.session);
+  const guestItems = useWishlistStore(state => state.guestItems);
   const hydrateRemoteWishlist = useWishlistStore(state => state.hydrateRemoteWishlist);
   const isSaved = useWishlistStore(state => state.isSaved);
+  const remoteItems = useWishlistStore(state => state.remoteItems);
   const toggleSaved = useWishlistStore(state => state.toggleSaved);
-  const items = useWishlistStore(state => state.getVisibleItems());
+  const items = React.useMemo(
+    () => (session ? remoteItems.map(item => item.hotel) : guestItems),
+    [guestItems, remoteItems, session],
+  );
 
   useFocusEffect(
     React.useCallback(() => {
       if (session) {
-        hydrateRemoteWishlist();
+        void hydrateRemoteWishlist();
       }
     }, [hydrateRemoteWishlist, session]),
   );

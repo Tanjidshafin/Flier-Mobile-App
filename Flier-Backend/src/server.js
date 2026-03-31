@@ -1,19 +1,14 @@
-const { createApp } = require('./app');
-const { connectToDatabase, closeDatabaseConnection } = require('./config/database');
-const { getEnvConfig } = require('./config/env');
+const { closeDatabaseConnection } = require('./config/database');
+const { initializeApp } = require('./bootstrap');
+const { attachSocketServer } = require('./services/socketServer');
 
 async function startServer() {
   try {
-    const config = getEnvConfig();
-    await connectToDatabase({
-      mongoUri: config.mongoUri,
-      dbName: config.dbName,
-    });
-
-    const app = createApp({ clientUrl: config.clientUrl });
+    const { app, config } = await initializeApp();
     const server = app.listen(config.port, () => {
       console.log(`Flier backend listening on port ${config.port}`);
     });
+    attachSocketServer(server, config.clientUrls);
 
     const shutdown = async signal => {
       console.log(`${signal} received. Closing Flier backend...`);

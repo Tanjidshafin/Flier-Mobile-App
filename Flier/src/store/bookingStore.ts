@@ -27,6 +27,10 @@ export const useBookingStore = create<BookingState>()(
       latestBooking: null,
       setDraftFromHotel: hotel => {
         const filters = useSearchStore.getState().filters;
+        const defaultRoomType =
+          'roomTypes' in hotel && Array.isArray(hotel.roomTypes) && hotel.roomTypes.length > 0
+            ? hotel.roomTypes[0]
+            : null;
 
         set({
           draft: {
@@ -41,7 +45,10 @@ export const useBookingStore = create<BookingState>()(
             hotelSlug: hotel.slug,
             locationLabel: hotel.locationLabel,
             nightlyRate: hotel.price.amount,
-            rooms: filters.rooms,
+            roomCount: filters.rooms,
+            roomTypeId: defaultRoomType?.code || 'signature-suite',
+            roomTypeImage: defaultRoomType?.image || hotel.image,
+            roomTypeName: defaultRoomType?.name || 'Signature Room',
           },
         });
       },

@@ -27,6 +27,10 @@ export function LoginScreen({ navigation, route }: Props) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleLogin = React.useCallback(async () => {
+    if (isSubmitting) {
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setError('');
@@ -51,7 +55,7 @@ export function LoginScreen({ navigation, route }: Props) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [email, navigation, password, route.params?.source, signIn]);
+  }, [email, isSubmitting, navigation, password, route.params?.source, signIn]);
 
   return (
     <AuthScreenShell
@@ -91,7 +95,7 @@ export function LoginScreen({ navigation, route }: Props) {
       ) : null}
 
       <PrimaryButton
-        disabled={!email.trim() || !password}
+        disabled={isSubmitting || !email.trim() || !password}
         label={isSubmitting ? 'Signing in...' : 'Sign In'}
         onPress={handleLogin}
       />

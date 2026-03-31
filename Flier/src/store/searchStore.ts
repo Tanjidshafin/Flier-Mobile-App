@@ -9,16 +9,17 @@ import { addDays, toISODateString } from '../utils/date';
 type SearchState = {
   filters: SearchFilters;
   destinationLabel: string;
+  searchText: string;
   resetFilters: () => void;
   setDateRange: (checkIn: string, checkOut: string) => void;
   setDestination: (
     destinationId: string | undefined,
     destinationLabel?: string,
-    query?: string,
+    searchText?: string,
   ) => void;
   setFilters: (patch: Partial<SearchFilters>) => void;
   setGuests: (adults: number, children: number, rooms: number) => void;
-  setQuery: (query: string) => void;
+  setSearchText: (searchText: string) => void;
 };
 
 const buildDefaultFilters = (): SearchFilters => ({
@@ -28,10 +29,11 @@ const buildDefaultFilters = (): SearchFilters => ({
   checkOut: toISODateString(addDays(new Date(), 3)),
   children: 0,
   destinationId: undefined,
+  destinationLabel: '',
   maxPrice: undefined,
   minPrice: undefined,
   minRating: undefined,
-  query: '',
+  searchText: '',
   rooms: 1,
   sortBy: 'recommended',
 });
@@ -41,10 +43,12 @@ export const useSearchStore = create<SearchState>()(
     set => ({
       destinationLabel: '',
       filters: buildDefaultFilters(),
+      searchText: '',
       resetFilters: () =>
         set({
           destinationLabel: '',
           filters: buildDefaultFilters(),
+          searchText: '',
         }),
       setDateRange: (checkIn, checkOut) =>
         set(state => ({
@@ -54,13 +58,15 @@ export const useSearchStore = create<SearchState>()(
             checkOut,
           },
         })),
-      setDestination: (destinationId, destinationLabel, query) =>
+      setDestination: (destinationId, destinationLabel, searchText) =>
         set(state => ({
           destinationLabel: destinationLabel ?? '',
+          searchText: searchText ?? '',
           filters: {
             ...state.filters,
             destinationId,
-            query: query ?? destinationLabel ?? '',
+            destinationLabel: destinationLabel ?? '',
+            searchText: searchText ?? '',
           },
         })),
       setFilters: patch =>
@@ -69,6 +75,14 @@ export const useSearchStore = create<SearchState>()(
             ...state.filters,
             ...patch,
           },
+          destinationLabel:
+            patch.destinationLabel !== undefined
+              ? patch.destinationLabel
+              : state.destinationLabel,
+          searchText:
+            patch.searchText !== undefined
+              ? patch.searchText
+              : state.searchText,
         })),
       setGuests: (adults, children, rooms) =>
         set(state => ({
@@ -79,11 +93,12 @@ export const useSearchStore = create<SearchState>()(
             rooms,
           },
         })),
-      setQuery: query =>
+      setSearchText: searchText =>
         set(state => ({
+          searchText,
           filters: {
             ...state.filters,
-            query,
+            searchText,
           },
         })),
     }),

@@ -54,11 +54,49 @@ jest.mock('react-native-reanimated', () => {
 
 jest.mock('react-native-gesture-handler', () => ({
   GestureHandlerRootView: ({ children }: { children: React.ReactNode }) => children,
+  Swipeable: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 jest.mock('@react-navigation/native', () => ({
+  createNavigationContainerRef: () => ({
+    isReady: () => false,
+    navigate: jest.fn(),
+  }),
   DefaultTheme: { colors: {} },
   NavigationContainer: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+jest.mock('@react-native-community/netinfo', () => ({
+  addEventListener: jest.fn(() => jest.fn()),
+}));
+
+jest.mock('react-native-config', () => ({
+  __esModule: true,
+  default: {},
+}));
+
+jest.mock('@stripe/stripe-react-native', () => ({
+  StripeProvider: ({ children }: { children: React.ReactNode }) => children,
+  useStripe: () => ({
+    initPaymentSheet: jest.fn(),
+    presentPaymentSheet: jest.fn(),
+  }),
+}));
+
+jest.mock('socket.io-client', () => ({
+  io: jest.fn(() => ({
+    disconnect: jest.fn(),
+    emit: jest.fn(),
+    off: jest.fn(),
+    on: jest.fn(),
+  })),
+}));
+
+jest.mock('react-native-image-picker', () => ({
+  launchImageLibrary: jest.fn().mockResolvedValue({
+    assets: [],
+    didCancel: true,
+  }),
 }));
 
 jest.mock('../src/navigation/AppNavigator', () => ({

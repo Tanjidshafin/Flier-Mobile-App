@@ -1,20 +1,33 @@
+const dns = require('dns');
 const mongoose = require('mongoose');
 
 let database;
+let connectionPromise;
 
 async function connectToDatabase({ mongoUri, dbName }) {
-  if (database) {
+  if (database && mongoose.connection.readyState === 1) {
     return database;
   }
 
-  await mongoose.connect(mongoUri, {
-    dbName,
-    serverSelectionTimeoutMS: 5000,
-  });
+  if (!connectionPromise) {
+    dns.setServers(['1.1.1.1', '8.8.8.8']);
 
-  database = mongoose.connection;
+    connectionPromise = mongoose
+      .connect(mongoUri, {
+        dbName,
+        serverSelectionTimeoutMS: 5000,
+      })
+      .then(() => {
+        database = mongoose.connection;
+        return database;
+      })
+      .catch(error => {
+        connectionPromise = undefined;
+        throw error;
+      });
+  }
 
-  return database;
+  return connectionPromise;
 }
 
 function getDatabase() {
@@ -33,6 +46,7 @@ async function closeDatabaseConnection() {
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
     database = undefined;
+    connectionPromise = undefined;
   }
 }
 
